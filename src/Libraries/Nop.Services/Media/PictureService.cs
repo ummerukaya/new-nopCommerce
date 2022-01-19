@@ -32,6 +32,7 @@ namespace Nop.Services.Media
         private readonly IRepository<Picture> _pictureRepository;
         private readonly IRepository<PictureBinary> _pictureBinaryRepository;
         private readonly IRepository<ProductPicture> _productPictureRepository;
+        private readonly IRepository<CategoryPicture> _categoryPictureRepository;
         private readonly ISettingService _settingService;
         private readonly IUrlRecordService _urlRecordService;
         private readonly IWebHelper _webHelper;
@@ -49,6 +50,7 @@ namespace Nop.Services.Media
             IRepository<Picture> pictureRepository,
             IRepository<PictureBinary> pictureBinaryRepository,
             IRepository<ProductPicture> productPictureRepository,
+            IRepository<CategoryPicture> categoryPictureRepository,
             ISettingService settingService,
             IUrlRecordService urlRecordService,
             IWebHelper webHelper,
@@ -62,6 +64,7 @@ namespace Nop.Services.Media
             _pictureRepository = pictureRepository;
             _pictureBinaryRepository = pictureBinaryRepository;
             _productPictureRepository = productPictureRepository;
+            _categoryPictureRepository = categoryPictureRepository;
             _settingService = settingService;
             _urlRecordService = urlRecordService;
             _webHelper = webHelper;
@@ -758,6 +761,25 @@ namespace Nop.Services.Media
                         join pp in _productPictureRepository.Table on p.Id equals pp.PictureId
                         orderby pp.DisplayOrder, pp.Id
                         where pp.ProductId == productId
+                        select p;
+
+            if (recordsToReturn > 0)
+                query = query.Take(recordsToReturn);
+
+            var pics = await query.ToListAsync();
+
+            return pics;
+        }
+
+        public virtual async Task<IList<Picture>> GetPicturesByCategoryIdAsync(int categoryId, int recordsToReturn = 0)
+        {
+            if (categoryId == 0)
+                return new List<Picture>();
+
+            var query = from p in _pictureRepository.Table
+                        join pp in _categoryPictureRepository.Table on p.Id equals pp.PictureId
+                        orderby pp.DisplayOrder, pp.Id
+                        where pp.CategoryId == categoryId
                         select p;
 
             if (recordsToReturn > 0)

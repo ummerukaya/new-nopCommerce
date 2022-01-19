@@ -42,6 +42,7 @@ namespace Nop.Services.Catalog
         protected readonly IRepository<DiscountProductMapping> _discountProductMappingRepository;
         protected readonly IRepository<LocalizedProperty> _localizedPropertyRepository;
         protected readonly IRepository<Product> _productRepository;
+        protected readonly IRepository<Category> _categoryRepository;
         protected readonly IRepository<ProductAttributeCombination> _productAttributeCombinationRepository;
         protected readonly IRepository<ProductAttributeMapping> _productAttributeMappingRepository;
         protected readonly IRepository<ProductCategory> _productCategoryRepository;
@@ -81,6 +82,7 @@ namespace Nop.Services.Catalog
             IRepository<DiscountProductMapping> discountProductMappingRepository,
             IRepository<LocalizedProperty> localizedPropertyRepository,
             IRepository<Product> productRepository,
+             IRepository<Category> categoryRepository,
             IRepository<ProductAttributeCombination> productAttributeCombinationRepository,
             IRepository<ProductAttributeMapping> productAttributeMappingRepository,
             IRepository<ProductCategory> productCategoryRepository,
@@ -116,6 +118,7 @@ namespace Nop.Services.Catalog
             _discountProductMappingRepository = discountProductMappingRepository;
             _localizedPropertyRepository = localizedPropertyRepository;
             _productRepository = productRepository;
+            _categoryRepository = categoryRepository;
             _productAttributeCombinationRepository = productAttributeCombinationRepository;
             _productAttributeMappingRepository = productAttributeMappingRepository;
             _productCategoryRepository = productCategoryRepository;
@@ -1002,6 +1005,64 @@ namespace Nop.Services.Catalog
             return await productsQuery.OrderBy(orderBy).ToPagedListAsync(pageIndex, pageSize);
         }
 
+        public virtual async Task<IPagedList<ProductCategoryMapping>> SearchProductCategoryAsync(
+            IPagedList<Product> product,
+            List<int> categoryIds,
+            int pageIndex = 0,
+            int pageSize = int.MaxValue)
+        {
+            if (pageSize == int.MaxValue)
+                pageSize = int.MaxValue - 1;
+
+            var productCategory = _productCategoryRepository.Table;
+            if (categoryIds is not null)
+            {
+                if (categoryIds.Contains(0))
+                    categoryIds.Remove(0);
+                //var productCategoryMapping = new PagedList<ProductCategoryMapping>() { };
+               // var productCategoryMapping = new IQueryable<PagedList<ProductCategoryMapping>>();
+              
+                if (categoryIds.Any())
+                {
+
+                    var productCategoryMapping = (from pc in productCategory
+                                       join p in _productRepository.Table on pc.ProductId equals p.Id
+                                       join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                                       where categoryIds.Contains(c.Id)
+                                       select new ProductCategoryMapping
+                                       {
+                                           CategoryId = c.Id,
+                                           CategoryName = c.Name,
+                                           Id = p.Id,
+                                           ProductName = p.Name
+                                       });
+
+                    var result = await productCategoryMapping.ToPagedListAsync(pageIndex, pageSize);
+                    return result;
+                }
+            }
+            else
+            {
+                var productCategoryMapping = (from pc in productCategory
+                                              join p in _productRepository.Table on pc.ProductId equals p.Id
+                                              join c in _categoryRepository.Table on pc.CategoryId equals c.Id
+                                              
+                                              select new ProductCategoryMapping
+                                              {
+                                                  CategoryId = c.Id,
+                                                  CategoryName = c.Name,
+                                                  Id = p.Id,
+                                                  ProductName = p.Name
+                                              });
+
+                var result = await productCategoryMapping.ToPagedListAsync(pageIndex, pageSize);
+                return result;
+
+            }
+            return null;
+           
+        }
+
         /// <summary>
         /// Gets products by product attribute
         /// </summary>
@@ -1369,6 +1430,32 @@ namespace Nop.Services.Catalog
         /// The task result contains the result
         /// </returns>
         public virtual async Task<int> GetTotalStockQuantityAsync(Product product, bool useReservedQuantity = true, int warehouseId = 0)
+        {
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+            if (product.ManageInventoryMethod != ManageInventoryMethod.ManageStock)
+                //We can calculate total stock quantity when 'Manage inventory' property is set to 'Track inventory'
+                return 0;
+
+            if (!product.UseMultipleWarehouses)
+                return product.StockQuantity;
+
+            var pwi = _productWarehouseInventoryRepository.Table.Where(wi => wi.ProductId == product.Id);
+
+            if (warehouseId > 0)
+                pwi = pwi.Where(x => x.WarehouseId == warehouseId);
+
+            var result = await pwi.SumAsync(x => x.StockQuantity);
+            if (useReservedQuantity)
+                result -= await pwi.SumAsync(x => x.ReservedQuantity);
+
+            return result;
+        }
+
+
+        //new code
+        public virtual async Task<int> GetTotalStockQuantityAsync(ProductCategoryMapping product, bool useReservedQuantity = true, int warehouseId = 0)
         {
             if (product == null)
                 throw new ArgumentNullException(nameof(product));

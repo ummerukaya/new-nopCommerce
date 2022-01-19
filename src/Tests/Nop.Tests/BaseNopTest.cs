@@ -319,6 +319,7 @@ namespace Nop.Tests
             services.AddTransient<IUploadService, UploadService>();
             services.AddTransient<IThemeProvider, ThemeProvider>();
             services.AddTransient<IExternalAuthenticationService, ExternalAuthenticationService>();
+           
 
             //slug route transformer
             services.AddSingleton<IReviewTypeService, ReviewTypeService>();
@@ -436,6 +437,7 @@ namespace Nop.Tests
             services.AddTransient<IVendorAttributeModelFactory, VendorAttributeModelFactory>();
             services.AddTransient<IVendorModelFactory, VendorModelFactory>();
             services.AddTransient<IWidgetModelFactory, WidgetModelFactory>();
+            
 
             //factories
             services.AddTransient<Web.Factories.IAddressModelFactory, Web.Factories.AddressModelFactory>();
@@ -554,10 +556,10 @@ namespace Nop.Tests
                 IHttpContextAccessor httpContextAccessor, INopFileProvider fileProvider,
                 IProductAttributeParser productAttributeParser, IRepository<Picture> pictureRepository,
                 IRepository<PictureBinary> pictureBinaryRepository,
-                IRepository<ProductPicture> productPictureRepository, ISettingService settingService,
+                IRepository<ProductPicture> productPictureRepository, IRepository<CategoryPicture> categoryPictureRepository, ISettingService settingService,
                 IUrlRecordService urlRecordService, IWebHelper webHelper, MediaSettings mediaSettings) : base(
                 dataProvider, downloadService, httpContextAccessor, fileProvider, productAttributeParser,
-                pictureRepository, pictureBinaryRepository, productPictureRepository, settingService, urlRecordService,
+                pictureRepository, pictureBinaryRepository, productPictureRepository, categoryPictureRepository,settingService, urlRecordService,
                 webHelper, mediaSettings)
             {
             }

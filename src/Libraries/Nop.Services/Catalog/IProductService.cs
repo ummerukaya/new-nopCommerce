@@ -176,6 +176,13 @@ namespace Nop.Services.Catalog
             bool showHidden = false,
             bool? overridePublished = null);
 
+        Task<IPagedList<ProductCategoryMapping>> SearchProductCategoryAsync(
+            IPagedList<Product> product,
+            List<int> categoryIds,
+            int pageIndex = 0,
+            int pageSize = int.MaxValue);
+
+
         /// <summary>
         /// Gets products by product attribute
         /// </summary>
@@ -327,6 +334,9 @@ namespace Nop.Services.Catalog
         /// The task result contains the result
         /// </returns>
         Task<int> GetTotalStockQuantityAsync(Product product, bool useReservedQuantity = true, int warehouseId = 0);
+
+        //new code
+        Task<int> GetTotalStockQuantityAsync(ProductCategoryMapping product, bool useReservedQuantity = true, int warehouseId = 0);
 
         //TODO: migrate to an extension method
         /// <summary>

@@ -1,8 +1,10 @@
 ﻿using System;
 using Nop.Core;
 using Nop.Core.Configuration;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Services.Plugins;
+using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Web.Framework.Models;
 
 namespace Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions
@@ -59,6 +61,18 @@ namespace Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions
 
             return entity.Map<TModel>();
         }
+
+
+        //new custom code starts
+        public static ProductCategoryModel ToProductCategoryModel(ProductCategoryMapping entity)
+        {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            return entity.Map<ProductCategoryModel>();
+        }
+        //new custom code ends
+
 
         /// <summary>
         /// Execute a mapping from the entity to the existing model

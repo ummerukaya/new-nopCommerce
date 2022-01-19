@@ -145,6 +145,8 @@ namespace Nop.Services.Media
         /// </returns>
         Task<IList<Picture>> GetPicturesByProductIdAsync(int productId, int recordsToReturn = 0);
 
+        Task<IList<Picture>> GetPicturesByCategoryIdAsync(int categoryId, int recordsToReturn = 0);
+
         /// <summary>
         /// Inserts a picture
         /// </summary>

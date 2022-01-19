@@ -38,7 +38,7 @@ namespace Nop.Web.Areas.Admin.Factories
     /// <summary>
     /// Represents the product model factory implementation
     /// </summary>
-    public partial class ProductModelFactory : IProductModelFactory
+    public partial class ProductCategoryModelFactory : IProductCategoryModelFactory
     {
         #region Fields
 
@@ -78,11 +78,12 @@ namespace Nop.Web.Areas.Admin.Factories
         private readonly TaxSettings _taxSettings;
         private readonly VendorSettings _vendorSettings;
 
+
         #endregion
 
         #region Ctor
 
-        public ProductModelFactory(CatalogSettings catalogSettings,
+        public ProductCategoryModelFactory(CatalogSettings catalogSettings,
             CurrencySettings currencySettings,
             IAclSupportedModelFactory aclSupportedModelFactory,
             IAddressService addressService,
@@ -710,7 +711,7 @@ namespace Nop.Web.Areas.Admin.Factories
         /// A task that represents the asynchronous operation
         /// The task result contains the product list model
         /// </returns>
-        public virtual async Task<ProductListModel> PrepareProductListModelAsync(ProductSearchModel searchModel)
+        public virtual async Task<ProductCategoryListModel> PrepareProductCategoryListModelAsync(ProductSearchModel searchModel)
         {
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
@@ -737,23 +738,31 @@ namespace Nop.Web.Areas.Admin.Factories
                 keywords: searchModel.SearchProductName,
                 pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize,
                 overridePublished: overridePublished);
+            var categories = new Category();
+            //if (categoryIds.Count() == 0)
+            //{
+            //   categories = (List<Category>)await _categoryService.GetAllCategoriesAsync();
+            //}
+            //else
+            //{
+            //    categories = (List<Category>)await _categoryService.GetCategoriesByIdsAsync(categoryIds.ToArray());
+            //}
+            
+            var productCategory = await _productService.SearchProductCategoryAsync(products, categoryIds);
 
             //prepare list model
-            var model = await new ProductListModel().PrepareToGridAsync(searchModel, products, () =>
+            var model = await new ProductCategoryListModel().PrepareToGridAsync(searchModel, productCategory, () =>
             {
-                return products.SelectAwait(async product =>
+                return productCategory.SelectAwait(async product =>
                 {
                     //fill in model values from the entity
-                    var productModel = product.ToModel<ProductModel>();
-
-                    //little performance optimization: ensure that "FullDescription" is not returned
-                    productModel.FullDescription = string.Empty;
-
-                    //fill in additional values (not existing in the entity)
-                    productModel.SeName = await _urlRecordService.GetSeNameAsync(product, 0, true, false);
+                    var productModel = MappingExtensions.ToProductCategoryModel(product);
 
                     var defaultProductPicture = (await _pictureService.GetPicturesByProductIdAsync(product.Id, 1)).FirstOrDefault();
-                    (productModel.PictureThumbnailUrl, _) = await _pictureService.GetPictureUrlAsync(defaultProductPicture, 75);
+                    (productModel.ProductPictureThumbnailUrl, _) = await _pictureService.GetPictureUrlAsync(defaultProductPicture, 75);
+
+                    var defaultCategoryPicture = (await _pictureService.GetPicturesByCategoryIdAsync(product.CategoryId, 1)).FirstOrDefault();
+                    (productModel.CategoryPictureThumbnailUrl, _) = await _pictureService.GetPictureUrlAsync(defaultCategoryPicture, 75);
 
                     productModel.ProductTypeName = await _localizationService.GetLocalizedEnumAsync(product.ProductType);
                     if (product.ProductType == ProductType.SimpleProduct && product.ManageInventoryMethod == ManageInventoryMethod.ManageStock)
@@ -765,6 +774,7 @@ namespace Nop.Web.Areas.Admin.Factories
 
             return model;
         }
+
 
         /// <summary>
         /// Prepare product model
@@ -1598,7 +1608,7 @@ namespace Nop.Web.Areas.Admin.Factories
                 default:
                     throw new ArgumentOutOfRangeException(nameof(attribute.AttributeType));
             }
-            
+
             model.Locales = await _localizedModelFactory.PrepareLocalizedModelsAsync(
                 async (AddSpecificationAttributeLocalizedModel locale, int languageId) =>
                 {
@@ -2408,4 +2418,5 @@ namespace Nop.Web.Areas.Admin.Factories
 
         #endregion
     }
+
 }
