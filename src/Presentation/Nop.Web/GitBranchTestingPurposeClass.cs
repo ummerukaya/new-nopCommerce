@@ -10,6 +10,7 @@ namespace Nop.Web
         public void Test()
         {
             Console.WriteLine("Added in test branch");
+            Console.WriteLine("To merge by pull request");
         }
     }
 }
